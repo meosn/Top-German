@@ -7,11 +7,19 @@ class GeminiService {
     func fetchWordDetails(for word: String) async throws -> [WordDTO] {
         let prompt = """
         Ты профессиональный немецкий словарь. Анализируй: "\(word)". 
-        СТРОГИЕ ПРАВИЛА ГРАММАТИКИ:
-        1. Для СУЩЕСТВИТЕЛЬНЫХ:gender обязательно только die, der, das, Обязательно 'plural' (с артиклем die) и 'rektion' (если есть управление).
-        2. Для ГЛАГОЛОВ: Обязательно формы: 'praesens' (3-е лицо), 'praeteritum' (3-е лицо), 'perfekt' (с hat/ist) и 'rektion'.
-        3. 'original' всегда в начальной форме. 'translation' на русском.
-        в examples приведи 2-3 примера с этим словом на немецком и перевод примера в скобках
+        
+        ПРАВИЛА ДЛЯ ПОЛЯ "rektion" (УПРАВЛЕНИЕ):
+        - КАТЕГОРИЧЕСКИ ЗАПРЕЩЕНО писать "transitive", "intransitive", "refl" или "—".
+        - Если у слова есть устойчивое управление, пиши строго: "предлог + падеж" (например: "an + Akk.", "от + Dat.").
+        - Если управления нет, пиши null.
+        
+        ОСТАЛЬНЫЕ ПРАВИЛА:
+        1. "original": немецкая нач. форма. 
+        2. "translation": русский перевод. 
+        3. "gender": только 'der', 'die', 'das'.
+        4. "examples": 2 примера "Нем (Рус)".
+        5. Для глаголов обязательно заполняй все три поля форм: praesens, praeteritum, perfekt
+        
         Верни ТОЛЬКО JSON массив [].
         """
         return try await performRequest(prompt: prompt, type: [WordDTO].self)
@@ -21,6 +29,10 @@ class GeminiService {
         let prompt = "Напиши ОДНО простое предложение на русском, подразумевающее использование слова '\(word.original)'. НЕ используй немецкие слова. Только текст."
         return try await performRawRequest(prompt: prompt)
     }
+    func askAnything(topic: String, question: String) async throws -> String {
+            let prompt = "Ты преподаватель немецкого. Тема: '\(topic)'. Ответь кратко на вопрос ученика: \(question). Используй примеры."
+            return try await performRawRequest(prompt: prompt)
+        }
 
     func verifyTranslation(userText: String, russianSentence: String, targetWord: String) async throws -> SentenceVerification {
         let prompt = """
@@ -41,34 +53,77 @@ class GeminiService {
         let prompt = "Напиши 3 немецких синонима для слова '\(word)' через запятую. Верни только синонимы"
         return try await performRawRequest(prompt: prompt)
     }
+    
+    func fetchIrregularVerbs(level: String) async throws -> [WordDTO] {
+        let prompt = """
+        Найди 10 популярных неправильных немецких глаголов для уровня \(level).
+        Верни ТОЛЬКО JSON массив [].
+        ОБЯЗАТЕЛЬНО заполни поля: 
+        "original" (инфинитив), 
+        "translation" (русский), 
+        "praesens" (3 л. ед.ч.), 
+        "praeteritum" (3 л. ед.ч.), 
+        "perfekt" (с hat/ist),
+        "examples" (2 примера в формате "Нем (Рус)").
+        """
+        return try await performRequest(prompt: prompt, type: [WordDTO].self)
+    }
 
+    func fetchDeepGrammar(topic: String, isExtraDetailed: Bool) async throws -> DeepGrammarInfo {
+        let modeInstruction = isExtraDetailed
+            ? "Напиши ФУНДАМЕНТАЛЬНЫЙ разбор. Минимум 8 абзацев, сложные исключения, история форм. Дай 10 примеров и таблицу."
+            : "Напиши КРАТКИЙ обзор. Только суть правила в 2 абзаца и 3 примера. БЕЗ таблиц."
+
+        let prompt = """
+        Ты лингвист. Тема: "\(topic)".
+        \(modeInstruction)
+        Верни ТОЛЬКО JSON:
+        {
+          "theory": "текст",
+          "nuances": ["пункт1", "..."],
+          "table": ["Колонка1 | Колонка2"] (или null если кратко),
+          "manyExamples": ["DE (RU)"]
+        }
+        """
+        return try await performRequest(prompt: prompt, type: DeepGrammarInfo.self)
+    }
+    
     func generateExtraExample(for word: String) async throws -> String {
         let prompt = "Напиши один короткий пример на нем. со словом '\(word)' и перевод примера в скобках. Верни ТОЛЬКО пример и перевод в скобках"
         return try await performRawRequest(prompt: prompt)
     }
 
     private func performRawRequest(prompt: String) async throws -> String {
-        let urlStr = "\(baseUrl)?key=\(apiKey)"
-        guard let url = URL(string: urlStr) else { throw GeminiError.invalidURL }
-        let body: [String: Any] = ["contents": [["parts": [["text": prompt]]]]]
-        var request = URLRequest(url: url)
-        request.httpMethod = "POST"
-        request.addValue("application/json", forHTTPHeaderField: "Content-Type")
-        request.httpBody = try? JSONSerialization.data(withJSONObject: body)
-        let (data, response) = try await URLSession.shared.data(for: request)
-        if let res = response as? HTTPURLResponse, res.statusCode != 200 { throw GeminiError.invalidResponse(res.statusCode) }
-        let result = try JSONDecoder().decode(GeminiResponse.self, from: data)
-        return result.candidates.first?.content.parts.first?.text ?? ""
-    }
-
-    private func performRequest<T: Codable>(prompt: String, type: T.Type) async throws -> T {
-        let rawText = try await performRawRequest(prompt: prompt)
-        var clean = rawText
-        if let f = clean.firstIndex(where: { $0 == "[" || $0 == "{" }), let l = clean.lastIndex(where: { $0 == "]" || $0 == "}" }) {
-            clean = String(clean[f...l])
+            let urlStr = "\(baseUrl)?key=\(apiKey)"
+            guard let url = URL(string: urlStr) else { throw GeminiError.invalidURL }
+            let body: [String: Any] = ["contents": [["parts": [["text": prompt]]]]]
+            var request = URLRequest(url: url)
+            request.httpMethod = "POST"
+            request.addValue("application/json", forHTTPHeaderField: "Content-Type")
+            request.httpBody = try? JSONSerialization.data(withJSONObject: body)
+            
+            let (data, response) = try await URLSession.shared.data(for: request)
+            if let res = response as? HTTPURLResponse, res.statusCode != 200 {
+                print("AI SERVER ERROR: \(res.statusCode)")
+                throw GeminiError.invalidResponse(res.statusCode)
+            }
+            let result = try JSONDecoder().decode(GeminiResponse.self, from: data)
+            return result.candidates.first?.content.parts.first?.text ?? ""
         }
-        clean = clean.replacingOccurrences(of: "```json", with: "").replacingOccurrences(of: "```", with: "")
-        guard let data = clean.data(using: .utf8) else { throw GeminiError.decodingError }
-        return try JSONDecoder().decode(T.self, from: data)
-    }
+
+        private func performRequest<T: Codable>(prompt: String, type: T.Type) async throws -> T {
+            let rawText = try await performRawRequest(prompt: prompt)
+            var clean = rawText
+            if let f = clean.firstIndex(where: { $0 == "[" || $0 == "{" }), let l = clean.lastIndex(where: { $0 == "]" || $0 == "}" }) {
+                clean = String(clean[f...l])
+            }
+            clean = clean.replacingOccurrences(of: "```json", with: "").replacingOccurrences(of: "```", with: "")
+            guard let data = clean.data(using: .utf8) else { throw GeminiError.decodingError }
+            do {
+                return try JSONDecoder().decode(T.self, from: data)
+            } catch {
+                print("DECODING ERROR: \(error)") // <--- Посмотрите это в консоли если не работает
+                throw GeminiError.decodingError
+            }
+        }
 }

@@ -27,6 +27,7 @@ struct TrainingView: View {
                                     }.padding().background(GermanColors.darkCardBG).cornerRadius(15)
                                 }.buttonStyle(.plain)
                             }
+                            Spacer(minLength: 120)
                         }
                     }.padding()
                 }

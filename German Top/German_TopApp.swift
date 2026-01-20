@@ -7,6 +7,11 @@ struct GermanApp: App {
         WindowGroup {
             ContentView()
         }
-        .modelContainer(for: GermanWord.self)
+        // Перечисляем все модели. SwiftData сама создаст базу.
+        .modelContainer(for: [
+            GermanWord.self,
+            IrregularVerb.self,
+            SavedDeepGrammar.self
+        ])
     }
 }
