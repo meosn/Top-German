@@ -66,27 +66,10 @@ struct FlashcardsView: View {
                 .stacked(at: getIndex(for: word), in: wordStack.count)
             }
             
-            undoButtonView
         }
     }
 
-    private var undoButtonView: some View {
-        VStack {
-            Spacer()
-            if !history.isEmpty {
-                Button(action: handleUndo) {
-                    Label("ВЕРНУТЬ КАРТОЧКУ", systemImage: "arrow.uturn.backward.circle.fill")
-                        .font(.system(size: 13, weight: .bold))
-                        .padding(.horizontal, 20)
-                        .padding(.vertical, 12)
-                        .background(.ultraThinMaterial)
-                        .foregroundColor(.white)
-                        .cornerRadius(25)
-                }
-                .padding(.bottom, 30)
-            }
-        }
-    }
+    
 
     private func setupSession() {
         isTabBarHidden.wrappedValue = true

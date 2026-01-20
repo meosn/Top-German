@@ -24,7 +24,14 @@ struct ResultCardView: View {
             
             if let pl = dto.plural, !pl.isEmpty { infoRow("Plural:", pl, color: .orange) }
             if let r = dto.rektion, !r.isEmpty { infoRow("Rek:", r, color: .purple) }
-            
+
+            if dto.wordType?.lowercased().contains("verb") == true {
+                VStack(alignment: .leading, spacing: 4) {
+                    if let p = dto.praesens { infoRow("Pres:", p) }
+                    if let pr = dto.praeteritum { infoRow("Prät:", pr) }
+                    if let pf = dto.perfekt { infoRow("Perf:", pf) }
+                }
+            }
             Button(action: onAdd) {
                 HStack {
                     Image(systemName: isAlreadyAdded ? "checkmark.circle.fill" : "plus")

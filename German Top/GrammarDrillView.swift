@@ -142,7 +142,7 @@ struct GrammarDrillView: View {
                 }) {
                     Text(result != nil ? "ДАЛЕЕ" : "ПРОВЕРИТЬ")
                         .font(.system(size: 16, weight: .black))
-                        .foregroundColor(.white) // Белый текст
+                        .foregroundColor(.white) 
                         .frame(maxWidth: .infinity)
                         .frame(height: 56)
                         .background(
