@@ -1,7 +1,7 @@
 import Foundation
 
 class GeminiService {
-    private let apiKey: String = "AIzaSyCkUEQQRA_zIvvUU3xxnSh7rvVrjvdJEsQ"
+    private let apiKey: String = ""
     private let baseUrl: String = "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-exp:generateContent"
 
     func fetchWordDetails(for word: String) async throws -> [WordDTO] {
