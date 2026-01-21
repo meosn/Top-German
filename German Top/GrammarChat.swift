@@ -39,7 +39,6 @@ struct GrammarChatView: View {
                 }
             }
             
-            // Поле ввода
             HStack {
                 TextField("Задать вопрос по теме...", text: $question)
                     .padding()

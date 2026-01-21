@@ -10,7 +10,7 @@ struct AddWordView: View {
     @State private var inputText = ""
     @State private var isLoading = false
     @State private var results: [WordDTO] = []
-    @State private var errorMessage: String? // Для отображения ошибок
+    @State private var errorMessage: String?
 
     private let gemini = GeminiService()
 
@@ -79,46 +79,26 @@ struct AddWordView: View {
     }
 
     func save(_ d: WordDTO) {
-        // 1. Проверяем дубликат
-        if allWords.contains(where: {
-            GermanWord.normalized($0.original) == GermanWord.normalized(d.original) &&
-            $0.translation.lowercased() == d.translation.lowercased() &&
-            editWord == nil // В режиме правки дубликат не ищем
-        }) {
-            return
-        }
-
-        // 2. Создаем или обновляем
-        if let existing = editWord {
-            existing.original = d.original
-            existing.translation = d.translation
-            existing.gender = d.gender
-            existing.rektion = d.rektion
-            existing.plural = d.plural
-            existing.praesens = d.praesens
-            existing.perfekt = d.perfekt
-            existing.examples = d.examples ?? []
-        } else {
-            let newWord = GermanWord(original: d.original, translation: d.translation, wordType: d.wordType ?? "Noun")
-            newWord.gender = d.gender
-            newWord.plural = d.plural
-            newWord.rektion = d.rektion
-            newWord.praesens = d.praesens
-            newWord.perfekt = d.perfekt
-            newWord.examples = d.examples ?? []
-            context.insert(newWord)
-        }
-
-        // 3. ПРИНУДИТЕЛЬНОЕ СОХРАНЕНИЕ В ПАМЯТЬ
-        do {
-            try context.save()
-            if editWord == nil {
-                withAnimation { results.removeAll { $0.id == d.id } }
-            } else {
-                dismiss()
-            }
-        } catch {
-            print("CRITICAL SAVE ERROR: \(error)")
-        }
+        if checkIfAdded(d) && editWord == nil { return }
+        
+        let type = d.wordType ?? "Word"
+        let w = editWord ?? GermanWord(original: d.original, translation: d.translation, wordType: type)
+        
+        w.original = d.original
+        w.translation = d.translation
+        w.wordType = type
+        w.gender = d.gender
+        w.plural = d.plural
+        w.rektion = d.rektion
+        w.praesens = d.praesens
+        w.praeteritum = d.praeteritum
+        w.perfekt = d.perfekt
+        w.examples = d.examples ?? []
+        
+        if editWord == nil { context.insert(w) }
+        
+        try? context.save()
+        if editWord != nil { dismiss() }
+        else { withAnimation { results.removeAll { $0.id == d.id } } }
     }
 }

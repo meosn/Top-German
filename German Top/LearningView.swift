@@ -12,8 +12,6 @@ struct LearningView: View {
                 
                 ScrollView {
                     VStack(alignment: .leading, spacing: 30) {
-                        
-                        // 2. ГРАММАТИКА ПО ТАГИЛЮ (РАСКРЫВАЮЩИЕСЯ СПИСКИ)
                         ForEach(GrammarData.contents) { part in
                             VStack(alignment: .leading, spacing: 15) {
                                 Text(part.title)
@@ -56,8 +54,6 @@ struct LearningView: View {
                                 }
                             }
                         }
-                        
-                        // 3. ПОПУЛЯРНЫЕ ТЕМЫ
                         VStack(alignment: .leading, spacing: 15) {
                             Text("Темы слов").font(.title2).bold().foregroundColor(.white)
                             LazyVGrid(columns: [GridItem(.flexible()), GridItem(.flexible())], spacing: 15) {
@@ -106,7 +102,6 @@ struct LearningView: View {
 }
 
 
-// MARK: - Вспомогательный компонент (ИСПРАВЛЯЕТ ОШИБКУ)
 struct TopicNavigationCard: View {
     let title: String
     let icon: String

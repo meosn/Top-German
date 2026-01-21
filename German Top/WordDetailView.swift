@@ -1,7 +1,6 @@
 import SwiftUI
 
 struct WordDetailView: View {
-    // Параметры по умолчанию позволяют вызывать вью гибко
     var word: GermanWord? = nil
     var dto: WordDTO? = nil
     
@@ -9,14 +8,12 @@ struct WordDetailView: View {
     @State private var showManual = false
     @State private var showAI = false
 
-    // MARK: - Вычисляемые свойства (выбирают данные из word или dto)
     
     private var original: String { word?.original ?? dto?.original ?? "" }
     private var translation: String { word?.translation ?? dto?.translation ?? "" }
     private var gender: String { word?.gender ?? dto?.gender ?? "" }
     private var wordType: String { word?.wordType ?? dto?.wordType ?? "" }
     
-    // Очистка управления (Rektion) от лингвистического мусора
     private var rektion: String {
         let r = word?.rektion ?? dto?.rektion ?? ""
         let junk = ["intransitive", "transitive", "refl", "—", "none"]
@@ -34,13 +31,10 @@ struct WordDetailView: View {
 
     var body: some View {
         ZStack {
-            // Фон всего экрана (глубокий черный)
             GermanColors.deepBlack.ignoresSafeArea()
             
             ScrollView {
                 VStack(alignment: .leading, spacing: 25) {
-                    
-                    // 1. ГЛАВНАЯ КАРТОЧКА (Дизайн как на фото)
                     VStack(alignment: .leading, spacing: 12) {
                         HStack(alignment: .firstTextBaseline, spacing: 10) {
                             Text(original)
@@ -74,7 +68,6 @@ struct WordDetailView: View {
                     .background(GermanColors.darkCardBG)
                     .cornerRadius(25)
 
-                    // 2. СЕКЦИЯ: ФОРМЫ ГЛАГОЛА (Только если это глагол или есть формы)
                     if wordType.lowercased().contains("verb") || !perfekt.isEmpty {
                         VStack(alignment: .leading, spacing: 10) {
                             Text("Формы глагола").font(.headline).foregroundColor(.secondary).padding(.leading, 5)
@@ -90,8 +83,6 @@ struct WordDetailView: View {
                             .cornerRadius(18)
                         }
                     }
-
-                    // 3. СЕКЦИЯ: МНОЖЕСТВЕННОЕ ЧИСЛО
                     if !plural.isEmpty {
                         VStack(alignment: .leading, spacing: 8) {
                             Text("Множественное число").font(.headline).foregroundColor(.secondary).padding(.leading, 5)
@@ -104,8 +95,6 @@ struct WordDetailView: View {
                                 .cornerRadius(15)
                         }
                     }
-
-                    // 4. СЕКЦИЯ: УПРАВЛЕНИЕ (Стиль Badge)
                     if !rektion.isEmpty {
                         VStack(alignment: .leading, spacing: 10) {
                             Text("Управление").font(.headline).foregroundColor(.secondary).padding(.leading, 5)
@@ -127,8 +116,6 @@ struct WordDetailView: View {
                             )
                         }
                     }
-
-                    // 5. СЕКЦИЯ: ПРИМЕРЫ (С разделителями)
                     if !examples.isEmpty {
                         VStack(alignment: .leading, spacing: 10) {
                             Text("Примеры").font(.headline).foregroundColor(.secondary).padding(.leading, 5)
@@ -150,8 +137,6 @@ struct WordDetailView: View {
                             .cornerRadius(22)
                         }
                     }
-                    
-                    // Отступ внизу для плавающего меню
                     Spacer(minLength: 150)
                 }
                 .padding()
@@ -159,12 +144,9 @@ struct WordDetailView: View {
         }
         .navigationBarTitleDisplayMode(.inline)
         .toolbar {
-            // Кнопка закрытия
             ToolbarItem(placement: .topBarLeading) {
                 Button("Закрыть") { dismiss() }
             }
-            
-            // Кнопка изменения (показывается только для слов из базы)
             if let w = word {
                 ToolbarItem(placement: .topBarTrailing) {
                     Menu {
@@ -180,17 +162,14 @@ struct WordDetailView: View {
                 }
             }
         }
-        // Экран ручной правки
         .sheet(isPresented: $showManual) {
             if let w = word { ManualEditView(word: w) }
         }
-        // Экран обновления через ИИ
         .sheet(isPresented: $showAI) {
             if let w = word { AddWordView(editWord: w) }
         }
     }
 
-    // Вспомогательная функция для строк глагола
     private func verbFormRow(label: String, value: String) -> some View {
         HStack {
             Text(label).font(.caption).foregroundColor(.gray)

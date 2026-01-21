@@ -1,6 +1,8 @@
 import SwiftUI
+import SwiftData
 
 struct ManualEditView: View {
+    @Environment(\.modelContext) private var context 
     @Environment(\.dismiss) var dismiss
     let word: GermanWord
     private let gemini = GeminiService()
@@ -81,7 +83,7 @@ struct ManualEditView: View {
                 
             }
             .navigationTitle("Правка")
-            .toolbar { Button("Готово") { save(); dismiss() }.bold() }
+            .toolbar { Button("Готово") { saveChanges(); dismiss() }.bold() }
             .onAppear {
                 original = word.original
                 translation = word.translation
@@ -97,16 +99,17 @@ struct ManualEditView: View {
         }
     }
 
-    func save() {
-        word.original = original
-        word.translation = translation
-        word.wordType = wordType 
-        word.gender = gender.isEmpty ? nil : gender
-        word.plural = plural.isEmpty ? nil : plural
-        word.rektion = rektion.isEmpty ? nil : rektion
-        word.praesens = praesens.isEmpty ? nil : praesens
-        word.praeteritum = praeteritum.isEmpty ? nil : praeteritum
-        word.perfekt = perfekt.isEmpty ? nil : perfekt
-        word.examples = examples
-    }
+    func saveChanges() {
+           word.original = original
+           word.translation = translation
+           word.gender = gender.isEmpty ? nil : gender
+           word.plural = plural.isEmpty ? nil : plural
+           word.rektion = rektion.isEmpty ? nil : rektion
+           word.praesens = praesens.isEmpty ? nil : praesens
+           word.perfekt = perfekt.isEmpty ? nil : perfekt
+           word.wordType = wordType
+           word.examples = examples
+           
+           try? context.save()
+       }
 }

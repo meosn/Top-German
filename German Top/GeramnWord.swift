@@ -1,22 +1,21 @@
 import SwiftUI
 import SwiftData
+import Foundation
 
-// --- БАЗА ДАННЫХ ---
+import Foundation
+import SwiftData
+
 @Model
-final class GermanWord {
+final class GermanWord: Identifiable {
     @Attribute(.unique) var id: UUID = UUID()
     var original: String
     var translation: String
     var wordType: String
+    
     var gender: String? {
-        didSet {
-            let g = gender?.lowercased().trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
-            if g.contains("ср") { gender = "das" }
-            else if g.contains("муж") || g == "м" { gender = "der" }
-            else if g.contains("жен") || g == "ж" { gender = "die" }
-            else { gender = g }
-        }
+        didSet { normalizeGender() }
     }
+    
     var plural: String?
     var praesens: String?
     var praeteritum: String?
@@ -28,38 +27,86 @@ final class GermanWord {
     var createdAt: Date = Date()
 
     init(original: String, translation: String, wordType: String = "Noun") {
-        self.id = UUID(); self.original = original; self.translation = translation
-        self.wordType = wordType; self.createdAt = Date()
+        self.id = UUID()
+        self.original = original
+        self.translation = translation
+        self.wordType = wordType
+        self.createdAt = Date()
     }
+    
+    private func normalizeGender() {
+        guard let g = gender?.lowercased().trimmingCharacters(in: .whitespacesAndNewlines) else { return }
+        if g.contains("ср") || g == "n" { gender = "das" }
+        else if g.contains("муж") || g == "м" { gender = "der" }
+        else if g.contains("жен") || g == "ж" { gender = "die" }
+    }
+    
     static func normalized(_ text: String) -> String {
-        text.lowercased().trimmingCharacters(in: .whitespacesAndNewlines)
-            .replacingOccurrences(of: "der ", with: "").replacingOccurrences(of: "die ", with: "").replacingOccurrences(of: "das ", with: "")
+        let article = ["der ", "die ", "das ", "ein ", "eine "]
+        var cleaned = text.lowercased().trimmingCharacters(in: .whitespacesAndNewlines)
+        for word in article {
+            cleaned = cleaned.replacingOccurrences(of: word, with: "")
+        }
+        return cleaned
     }
 }
 
 @Model
-final class IrregularVerb {
-    var id: UUID = UUID()
-    var original: String; var translation: String; var praesens: String; var praeteritum: String; var perfekt: String
-    var level: String; var examples: [String] = []; var createdAt: Date = Date()
+final class IrregularVerb: Identifiable {
+    @Attribute(.unique) var id: UUID = UUID()
+    var original: String
+    var translation: String
+    var praesens: String
+    var praeteritum: String
+    var perfekt: String
+    var level: String
+    var examples: [String] = []
+    var createdAt: Date = Date()
+
     init(original: String, translation: String, praesens: String, praeteritum: String, perfekt: String, level: String, examples: [String] = []) {
-        self.original = original; self.translation = translation; self.praesens = praesens
-        self.praeteritum = praeteritum; self.perfekt = perfekt; self.level = level; self.examples = examples; self.createdAt = Date()
+        self.original = original
+        self.translation = translation
+        self.praesens = praesens
+        self.praeteritum = praeteritum
+        self.perfekt = perfekt
+        self.level = level
+        self.examples = examples
+        self.createdAt = Date()
     }
 }
+
+
+import Foundation
+import SwiftData
 
 @Model
 final class SavedDeepGrammar {
     @Attribute(.unique) var topic: String
-    var theoryBrief: String; var nuancesBrief: [String]; var examplesBrief: [String]
-    var theoryDeep: String?; var nuancesDeep: [String]?; var tableDeep: [String]?; var examplesDeep: [String]?
-    var isDetailedMode: Bool = false; var createdAt: Date = Date()
-    init(topic: String, theoryBrief: String, nuancesBrief: [String], examplesBrief: [String]) {
-        self.topic = topic; self.theoryBrief = theoryBrief; self.nuancesBrief = nuancesBrief; self.examplesBrief = examplesBrief; self.createdAt = Date()
+    
+    var theoryBrief: String
+    var nuancesBrief: [String]
+    var examplesBrief: [String]
+    var tableBrief: [String]?
+    
+    var theoryDeep: String?
+    var nuancesDeep: [String]?
+    var tableDeep: [String]?
+    var examplesDeep: [String]?
+    
+    var isDetailedMode: Bool = false
+    var createdAt: Date = Date()
+
+    init(topic: String, theoryBrief: String, nuancesBrief: [String], examplesBrief: [String], tableBrief: [String]? = nil) {
+        self.topic = topic
+        self.theoryBrief = theoryBrief
+        self.nuancesBrief = nuancesBrief
+        self.examplesBrief = examplesBrief
+        self.tableBrief = tableBrief
+        self.isDetailedMode = false
+        self.createdAt = Date()
     }
 }
 
-// --- СТРУКТУРЫ ИИ ---
 struct WordDTO: Codable, Identifiable {
     var id: UUID = UUID()
     let original: String
@@ -98,7 +145,6 @@ struct WordDTO: Codable, Identifiable {
             self.examples = nil
         }
     }
-    // Вставьте это ВНУТРЬ struct WordDTO, перед или после init(from decoder:)
 
     init(id: UUID = UUID(), original: String, translation: String, wordType: String?, gender: String?, plural: String?, praesens: String?, praeteritum: String?, perfekt: String?, rektion: String?, examples: [String]?) {
         self.id = id
@@ -115,12 +161,11 @@ struct WordDTO: Codable, Identifiable {
     }
 }
 
-struct DeepGrammarInfo: Codable { let theory: String; let nuances: [String]; let table: [String]?; let manyExamples: [String] }
+
 struct SentenceVerification: Codable { let isCorrect: Bool; let feedback: String; let correctedVersion: String? }
 struct WordLookupItem: Identifiable { let id = UUID(); let word: String }
 enum SwipeDirection { case left, right }
 
-// --- ОКРУЖЕНИЕ ---
 struct TabBarVisibilityKey: EnvironmentKey { static let defaultValue: Binding<Bool> = .constant(false) }
 extension EnvironmentValues {
     var isTabBarHidden: Binding<Bool> {
@@ -135,6 +180,15 @@ extension Array {
         }
     }
 }
+
+struct DeepGrammarInfo: Codable {
+    let theory: String
+    let nuances: [String]
+    let table: [String]?
+    let manyExamples: [String]
+}
+
+
 
 struct GermanColors {
     static func colorForGender(_ gender: String?) -> Color {

@@ -1,8 +1,11 @@
 import SwiftUI
+import _SwiftData_SwiftUI
 
 struct ContentView: View {
     @State private var selectedTab = 0
     @State private var isTabBarHidden = false
+    @Environment(\.modelContext) private var context
+    @Query var allWords: [GermanWord]
     
     init() { UITabBar.appearance().isHidden = true }
     
@@ -11,7 +14,7 @@ struct ContentView: View {
             Group {
                 if selectedTab == 0 { WordLibraryView() }
                 else if selectedTab == 1 { TrainingView() }
-                else if selectedTab == 2 { IrregularVerbsView() } // НОВОЕ
+                else if selectedTab == 2 { IrregularVerbsView() }
                 else if selectedTab == 3 { LearningView() }
                 else { DataManagementView() }
             }
@@ -19,10 +22,10 @@ struct ContentView: View {
             .environment(\.isTabBarHidden, $isTabBarHidden)
             
             if !isTabBarHidden {
-                HStack(spacing: 25) { // Уменьшил spacing, так как теперь 5 иконок
+                HStack(spacing: 25) { 
                     TabButton(icon: "books.vertical.fill", title: "Словарь", isSelected: selectedTab == 0) { selectedTab = 0 }
                     TabButton(icon: "graduationcap.fill", title: "Тренировка", isSelected: selectedTab == 1) { selectedTab = 1 }
-                    TabButton(icon: "bolt.fill", title: "Глаголы", isSelected: selectedTab == 2) { selectedTab = 2 } // НОВОЕ
+                    TabButton(icon: "bolt.fill", title: "Глаголы", isSelected: selectedTab == 2) { selectedTab = 2 }
                     TabButton(icon: "book.fill", title: "Обучение", isSelected: selectedTab == 3) { selectedTab = 3 }
                     TabButton(icon: "tray.full.fill", title: "Данные", isSelected: selectedTab == 4) { selectedTab = 4 }
                 }
@@ -31,6 +34,9 @@ struct ContentView: View {
                 .transition(.move(edge: .bottom).combined(with: .opacity))
             }
         }
+        .onAppear {
+                    try? context.save()
+                }
         .background(Color.black.ignoresSafeArea())
         .animation(.spring(), value: isTabBarHidden)
     }

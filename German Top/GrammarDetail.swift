@@ -12,7 +12,6 @@ struct GrammarDetailView: View {
             ScrollView {
                 VStack(alignment: .leading, spacing: 25) {
                     
-                    // Контент урока
                     ForEach(lesson.sections) { section in
                         VStack(alignment: .leading, spacing: 12) {
                             if let header = section.header {
@@ -44,10 +43,8 @@ struct GrammarDetailView: View {
                         .cornerRadius(20)
                     }
                     
-                    // Внутри VStack в GrammarDetailView.swift
 
                     HStack(spacing: 15) {
-                        // КНОПКА ПОДРОБНЕЕ
                         NavigationLink(destination: GrammarDeepDetailView(topic: lesson.title)) {
                             HStack {
                                 Image(systemName: "doc.text.magnifyingglass")
@@ -61,7 +58,6 @@ struct GrammarDetailView: View {
                             .cornerRadius(15)
                         }
 
-                        // КНОПКА ЧАТА (Уже была)
                         NavigationLink(destination: GrammarChatView(topic: lesson.title)) {
                             HStack {
                                 Image(systemName: "sparkles")
