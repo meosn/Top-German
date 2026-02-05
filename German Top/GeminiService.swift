@@ -1,22 +1,23 @@
 import Foundation
 
 class GeminiService {
-    private let apiKey: String = ""
-    private let baseUrl: String = "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-exp:generateContent"
+    private let apiKey: String = "AIzaSyDNTIEjuB_IXEwwGpAk4YU6GbFXciX69ns"
+    private let baseUrl: String = "https://generativelanguage.googleapis.com/v1beta/models/gemini-flash-latest:generateContent"
 
     func fetchWordDetails(for word: String) async throws -> [WordDTO] {
         let prompt = """
         Ты профессиональный немецкий словарь. Анализируй: "\(word)". 
         
         ПРАВИЛА ДЛЯ ПОЛЯ "rektion" (УПРАВЛЕНИЕ):
-        - КАТЕГОРИЧЕСКИ ЗАПРЕЩЕНО писать "transitive", "intransitive", "refl" или "—".
+        - КАТЕГОРИЧЕСКИ ЗАПРЕЩЕНО писать "transitive", "intransitive", "refl".
         - Если у слова есть устойчивое управление, пиши его. Если вариантов кпраавлениям несколько, пиши все (с поснением на русском).
-        - Если управления нет, пиши null.
+        - Если управления нет, не заполняй поля.
         
         СТРОГИЕ ПРАВИЛА ДЛЯ ГЛАГОЛОВ:
             - Если слово является ГЛАГОЛОМ, ты ОБЯЗАН заполнить поле "praeteritum".
             - "praeteritum": форма 3-го лица единственного числа (например: для 'erleben' это 'erlebte', для 'sehen' это 'sah').
-            - Поле "praeteritum" не может быть null для глаголов.
+            - Поле "praeteritum" не может быть ""(пустым) для глаголов.
+        для остальных частей речи эти поля должны быть "" (пустыми, не заполняй их)
         
         ОСТАЛЬНЫЕ ПРАВИЛА:
         1. "original": немецкая нач. форма. 
@@ -24,7 +25,8 @@ class GeminiService {
         3. "gender": только 'der', 'die', 'das'.
         4. "examples": 2 примера "Нем (Рус)".
         5. Для глаголов обязательно заполняй все три поля форм: praesens, praeteritum, perfekt
-        6. Также заполняй wordType (только Noun, Verb, Adjective, или Phrase)
+        6. Также заполняй wordType (только Noun, Verb, Adjective, или Phrase), если слово не является ни одним из перечисленных, пиши Phrase
+        7. для существительных обязательно заполняй plural (множественное число)
         
         Верни ТОЛЬКО JSON массив [].
         """
